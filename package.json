@@ -20,7 +20,7 @@
   "homepage": "https://github.com/vishalkumar12323/aws-drop-img#readme",
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "jwt": "^0.2.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.2"
   }
 }
