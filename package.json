@@ -1,0 +1,26 @@
+{
+  "name": "aws-drop-img",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vishalkumar12323/aws-drop-img.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vishalkumar12323/aws-drop-img/issues"
+  },
+  "homepage": "https://github.com/vishalkumar12323/aws-drop-img#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "jwt": "^0.2.0",
+    "mongoose": "^8.18.2"
+  }
+}
