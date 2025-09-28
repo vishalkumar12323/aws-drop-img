@@ -1,17 +1,14 @@
-import mongoose from "mongoose";
+import { Client } from "pg";
 
-let isConnected = false;
+const client = new Client({
+  host: process.env.DATABASE_HOST,
+  port: process.env.DATABASE_PORT,
+  database: process.env.DATABASE_NAME,
+  user: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASSWORD,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
 
-export async function connectDB() {
-  try {
-    await mongoose.connect(process.env.DOCDB_URL, {
-      tls: true,
-      tlsCAFile: "./rds-combined-ca-bundle.pem",
-    });
-    isConnected = true;
-    console.log("connected to DocumentDB");
-  } catch (error) {
-    console.log("DB connection error: ", error);
-    throw error;
-  }
-}
+export { client };

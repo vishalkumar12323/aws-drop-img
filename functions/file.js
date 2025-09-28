@@ -1,13 +1,12 @@
 import AWS from "aws-sdk";
-import File from "../models/File";
-import { connectDB } from "../utils/database";
+import { client } from "../utils/database";
 import { verifyToken } from "../utils/auth-middleware";
 
 const s3 = AWS.S3();
 
 export const handler = async (event) => {
   try {
-    await connectDB();
+    await client.connect();
 
     const user = verifyToken(event.headers);
 
@@ -24,32 +23,48 @@ export const handler = async (event) => {
       };
       const data = await s3.upload(params).promise();
 
-      const fileDoc = await File.create({
-        userId: user.id,
-        fileName: body.fileName,
-        fileKey: key,
-        fileUrl: data.Location,
-      });
+      const query = `
+        INSERT INTO files(userId, fileName, fileKey, fileUrl)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *;
+      `;
+      const fileDoc = await client.query(query, [
+        user.id,
+        body.fileName,
+        body.fileKey,
+        data.Location,
+      ]);
 
-      return { statusCode: 200, body: JSON.stringify(fileDoc) };
+      return { statusCode: 200, body: JSON.stringify(fileDoc.rows[0]) };
     }
 
     // List files
     if (event.httpMethod === "GET" && event.path.endsWith("files")) {
-      const files = await File.find({ userId: user.id });
-      return { statusCode: 200, body: JSON.stringify(files) };
+      const query = `
+        SELECT * FROM files
+        WHERE userId = $1;
+      `;
+      const files = await client.query(query, [user.id]);
+      return { statusCode: 200, body: JSON.stringify(files.rows[0]) };
     }
 
     // Delete files
     if (event.httpMethod === "DELETE") {
       const { id } = event.pathParameters;
-      const file = await File.findById(id);
+
+      const query = `SELECT * FROM files WHERE id = $1;`;
+      const file = await client.query(query, [id]);
       if (!file) return { statusCode: 404, body: "File not found" };
 
       await s3
         .deleteObject({ Bucket: process.env.S3_BUCKET, Key: file.fileKey })
         .promise();
-      await file.deleteOne();
+
+      const deleteQuery = `
+        DELETE FROM files
+        WHERE id = $1;
+      `;
+      await client.query(deleteQuery, [id]);
       return {
         statusCode: 200,
         body: JSON.stringify({ message: "File deleted" }),
@@ -60,5 +75,7 @@ export const handler = async (event) => {
   } catch (error) {
     console.log("file handler err: ", error);
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+  } finally {
+    await client.end();
   }
 };
